@@ -1,0 +1,25 @@
+# Ignore environment & config files
+.env
+config.php
+database.php
+
+# Ignore dependency directories
+vendor/
+node_modules/
+
+# Ignore compiled files
+*.log
+*.cache
+
+# Ignore database files
+*.sql
+*.db
+
+# Ignore IDE settings
+.vscode/
+.idea/
+*.iml
+
+# Ignore system files
+.DS_Store
+Thumbs.db
