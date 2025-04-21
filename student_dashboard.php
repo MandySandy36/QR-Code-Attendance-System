@@ -120,6 +120,34 @@ $attendance_history = $conn->query("SELECT subjects.subject_name, attendance.att
         </ul>
     </div>
 
+    <!-- Enroll in New Subjects -->
+<div class="mt-5">
+    <h4>Available Subjects to Enroll</h4>
+    <ul class="list-group">
+        <?php
+        $enrolled_query = "SELECT subject_id FROM student_subjects WHERE student_id = $student_id";
+        $enrolled_result = $conn->query($enrolled_query);
+        $enrolled_ids = [];
+        while ($enrolled = $enrolled_result->fetch_assoc()) {
+            $enrolled_ids[] = $enrolled["subject_id"];
+        }
+
+        $enrolled_ids_str = implode(",", $enrolled_ids ?: [0]); // Avoid empty IN()
+        $available_subjects = $conn->query("SELECT * FROM subjects WHERE id NOT IN ($enrolled_ids_str)");
+
+        if ($available_subjects->num_rows > 0) {
+            while ($sub = $available_subjects->fetch_assoc()) { ?>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <?= $sub["subject_name"]; ?>
+                    <a href="enroll_subject.php?subject_id=<?= $sub["id"]; ?>" class="btn btn-success btn-sm">Enroll</a>
+                </li>
+        <?php }} else { ?>
+            <li class="list-group-item">You're enrolled in all available subjects.</li>
+        <?php } ?>
+    </ul>
+</div>
+
+
     <div class="mt-4">
         <a href="slogout.php" class="btn btn-danger" onclick="return confirm('Are you sure you want to logout?')">Logout</a>
     </div>

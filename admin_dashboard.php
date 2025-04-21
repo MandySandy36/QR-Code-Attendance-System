@@ -52,6 +52,7 @@ $attendance_count = $conn->query("SELECT COUNT(*) AS total FROM attendance")->fe
         <a href="view_attendance.php" class="btn btn-success">View Attendance</a>
         <a href="scan_qr.php" class="btn btn-warning">Scan QR</a>
         <a href="bulk_upload.php" class="btn btn-dark">Bulk Upload</a>
+        <a href="mark_attendance_manually.php" class="btn btn-info">Manual Attendance</a>
         <a href="alogout.php" class="btn btn-danger">Logout</a>
     </div>
 </body>

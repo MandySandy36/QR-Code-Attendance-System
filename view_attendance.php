@@ -107,13 +107,95 @@ while ($row = $attendance_summary->fetch_assoc()) {
         </tbody>
     </table>
 
+    <div class="mt-4">
+        <a href="export_attendance.php?format=csv" class="btn btn-primary">Export CSV</a>
+        <a href="export_attendance.php?format=pdf" class="btn btn-danger">Export PDF</a>
+    </div> 
+
+    <h3 class="mt-4">Subject-wise Defaulters (Attendance < 75%)</h3>
+
+<form method="GET" class="mb-3">
+    <div class="row">
+        <div class="col-md-3">
+            <select name="defaulter_subject_id" class="form-control">
+                <option value="">Select Subject</option>
+                <?php
+                $subjects->data_seek(0); // Reset result pointer
+                while ($subject = $subjects->fetch_assoc()) { ?>
+                    <option value="<?php echo $subject["id"]; ?>" <?php if (isset($_GET["defaulter_subject_id"]) && $_GET["defaulter_subject_id"] == $subject["id"]) echo "selected"; ?>>
+                        <?php echo $subject["subject_name"]; ?>
+                    </option>
+                <?php } ?>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-warning">Show Defaulters</button>
+        </div>
+    </div>
+</form>
+
+<?php
+if (isset($_GET["defaulter_subject_id"]) && !empty($_GET["defaulter_subject_id"])) {
+    $subject_id = $_GET["defaulter_subject_id"];
+
+    // Total lectures for this subject
+    $total_lectures_query = "SELECT COUNT(*) AS total FROM qr_codes WHERE subject_id = $subject_id";
+    $total_lectures_result = $conn->query($total_lectures_query);
+    $total_lectures = $total_lectures_result->fetch_assoc()["total"];
+
+    // Student attendance per subject
+    $defaulters_query = "SELECT students.name, students.roll_no, COUNT(attendance.id) AS attended 
+                         FROM students
+                         LEFT JOIN attendance ON students.id = attendance.student_id AND attendance.subject_id = $subject_id
+                         GROUP BY students.id
+                         HAVING attended < (0.75 * $total_lectures)";
+
+    $defaulters = $conn->query($defaulters_query);
+
+    if ($defaulters->num_rows > 0) {
+        ?>
+        <table class="table table-bordered mt-3">
+            <thead class="table-danger">
+                <tr>
+                    <th>Student Name</th>
+                    <th>Roll No</th>
+                    <th>Lectures Attended</th>
+                    <th>Total Lectures</th>
+                    <th>Percentage</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php while ($row = $defaulters->fetch_assoc()) {
+                    $percentage = $total_lectures > 0 ? round(($row["attended"] / $total_lectures) * 100, 2) : 0;
+                    ?>
+                    <tr>
+                        <td><?php echo $row["name"]; ?></td>
+                        <td><?php echo $row["roll_no"]; ?></td>
+                        <td><?php echo $row["attended"]; ?></td>
+                        <td><?php echo $total_lectures; ?></td>
+                        <td><?php echo $percentage; ?>%</td>
+                    </tr>
+                <?php } ?>
+            </tbody>
+        </table>
+        <?php
+    } else {
+        echo '<div class="alert alert-info mt-3">No defaulters found for this subject.</div>';
+    }
+
+    // ✅ Export buttons shown regardless of whether defaulters exist
+    ?>
+    <div class="mt-3">
+        <a href="export_attendance.php?export_type=defaulters&subject_id=<?php echo $subject_id; ?>&format=csv" class="btn btn-success">Export Defaulters (CSV)</a>
+        <a href="export_attendance.php?export_type=defaulters&subject_id=<?php echo $subject_id; ?>&format=pdf" class="btn btn-danger">Export Defaulters (PDF)</a>
+    </div>
+<?php } ?>
+
     <h3 class="mt-4">Subject-wise Attendance Chart</h3>
     <canvas id="attendanceChart"></canvas>
 
     <div class="mt-4">
         <a href="admin_dashboard.php" class="btn btn-primary">Back to Dashboard</a>
-        <a href="export_attendance.php?format=csv" class="btn btn-primary">Export CSV</a>
-        <a href="export_attendance.php?format=pdf" class="btn btn-danger">Export PDF</a>
     </div>
 
     <script>
