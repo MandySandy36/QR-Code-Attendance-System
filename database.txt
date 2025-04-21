@@ -70,6 +70,3 @@ CREATE TABLE IF NOT EXISTS `subjects` (
   UNIQUE KEY `subject_name` (`subject_name`),
   UNIQUE KEY `subject_code` (`subject_code`)
 );
-
-
-
