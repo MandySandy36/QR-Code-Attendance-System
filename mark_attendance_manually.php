@@ -20,11 +20,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["mark_attendance"])) {
         $student_id = $row['id'];
         $is_present = in_array($student_id, $present_students) ? 'PRESENT' : 'ABSENT';
 
-        // Insert attendance
-        $conn->query("INSERT INTO attendance (student_id, subject_id, qr_code, attendance_status, attendance_time)
-                      VALUES ($student_id, $subject_id, 'MANUAL', '$is_present', '$attendance_date')");
-    }
+        // Check if attendance already marked for the student on the selected date and subject
+        $existing = $conn->query("SELECT id FROM attendance 
+        WHERE student_id = $student_id 
+        AND subject_id = $subject_id 
+        AND DATE(attendance_time) = '$attendance_date'");
 
+        if ($existing->num_rows == 0) {
+        // Insert only if no record exists for that day
+        $conn->query("INSERT INTO attendance (student_id, subject_id, qr_code, attendance_status, attendance_time)
+        VALUES ($student_id, $subject_id, 'MANUAL', '$is_present', '$attendance_date')");
+        }
+    }
     $message = "Attendance successfully marked!";
 }
 ?>
@@ -91,7 +98,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["mark_attendance"])) {
                             <td><?php echo $student["name"]; ?></td>
                             <td><?php echo $student["roll_no"]; ?></td>
                             <td>
-                                <input type="checkbox" name="present[]" value="<?php echo $student["id"]; ?>" checked>
+                            <?php
+                                $student_id = $student["id"];
+                                $attendance_date = $_POST["attendance_date"];
+                                $check = $conn->query("SELECT attendance_status FROM attendance 
+                                                    WHERE student_id = $student_id 
+                                                    AND subject_id = $subject_id 
+                                                    AND DATE(attendance_time) = '$attendance_date'");
+                                
+                                $is_checked = "checked"; // default
+                                if ($check->num_rows > 0) {
+                                    $status = $check->fetch_assoc()['attendance_status'];
+                                    $is_checked = $status === 'PRESENT' ? 'checked' : '';
+                                }
+                            ?>
+                            <input type="checkbox" name="present[]" value="<?php echo $student_id; ?>" <?php echo $is_checked; ?>>
+
                             </td>
                         </tr>
                     <?php } ?>
